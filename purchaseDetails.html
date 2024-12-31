@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchased Book Details</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script type="module" src="https://unpkg.com/vue@3/dist/vue.esm-browser.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff;
+            padding: 10px 20px;
+            color: white;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="orderdetails">
+        <div class="navbar">
+            <span>{{ userEmail }}</span>
+            <div>
+                <a href="#" @click.prevent="fetchAllPurchasedBooks">All Purchased Books</a>
+            </div>
+            <div>
+                <a href="#" @click.prevent="logout">Logout</a>
+            </div>
+        </div>
+        <div class="container">
+            <h2>Purchased Book Details</h2>
+            <div v-if="purchasedBook">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>{{ purchasedBook.book.name }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Quantity:</strong> {{ purchasedBook.quantity }}</p>
+                        <p><strong>Price:</strong> ₹{{ purchasedBook.book.price }}</p>
+                        <p><strong>Total:</strong> ₹{{ purchasedBook.totalAmount }}</p>
+                    </div>
+                </div>
+            </div>
+            <div v-if="purchasedBooks.length > 0" class="mt-4">
+                <h3>All Purchased Books</h3>
+                <ul class="list-group">
+                    <li class="list-group-item" v-for="book in purchasedBooks" :key="book.id">
+                        <strong>{{ book.book.name }}</strong> - ₹{{ book.book.price }}
+                        (Quantity: {{ book.quantity }}, Total: ₹{{ book.totalAmount }})
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+        integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+
+        createApp({
+            data() {
+                return {
+                    userEmail: "",
+                    purchasedBook: {
+                        book: {
+                            name: '',
+                            price: 0
+                        },
+                        quantity: 0,
+                        totalAmount: 0
+                    },
+                    purchasedBooks: []
+                };
+            },
+            mounted() {
+                const email = localStorage.getItem("userEmail");
+                if (!email) {
+                    window.location.href = "login.html";
+                } else {
+                    this.userEmail = email;
+                }
+
+                const currentPurchase = JSON.parse(localStorage.getItem("currentPurchase"));
+                if (currentPurchase) {
+                    this.purchasedBook = {
+                        book: {
+                            name: currentPurchase.bookName,
+                            price: currentPurchase.price
+                        },
+                        quantity: currentPurchase.quantity,
+                        totalAmount: currentPurchase.totalAmount
+                    };
+                } else {
+                    alert("No purchased books found.");
+                }
+            },
+            methods: {
+                async getPurchasedBookDetails(bookId) {
+                    try {
+                        const response = await axios.get(`http://localhost:5038/api/todoapp/GetPurchases`);
+                        const purchase = response.data.find(p => p.book.id == bookId && p.user.email === this.userEmail);
+
+                        if (purchase) {
+                            this.purchasedBook = {
+                                ...purchase,
+                                totalAmount: purchase.book.price * purchase.quantity
+                            };
+                        } else {
+                            alert("Purchase details not found.");
+                        }
+                    } catch (error) {
+                        console.error("Error fetching purchased book details:", error);
+                        alert("An error occurred while fetching purchase details. Please try again later.");
+                    }
+                },
+                fetchAllPurchasedBooks() {
+                    axios.get("http://localhost:5038/api/todoapp/GetPurchases")
+                        .then(response => {
+                            const aggregatedPurchases = response.data.filter(p => p.user.email === this.userEmail);
+
+                            if (aggregatedPurchases.length === 0) {
+                                alert("No purchased books found.");
+                            } else {
+                                this.purchasedBooks = aggregatedPurchases.map(p => ({
+                                    ...p,
+                                    totalAmount: p.book.price * p.quantity
+                                }));
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error fetching all purchased books:", error);
+                            alert("An error occurred while fetching all purchased books. Please try again later.");
+                        });
+                },
+                logout() {
+                    localStorage.removeItem("userEmail");
+                    window.location.href = "login.html";
+                }
+            }
+        }).mount("#orderdetails");
+    </script>
+</body>
+
+</html>
