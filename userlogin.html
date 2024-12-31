@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Summary</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script type="module" src="https://unpkg.com/vue@3/dist/vue.esm-browser.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff;
+            padding: 10px 20px;
+            color: white;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin: 0 0 10px;
+        }
+
+        .list-group {
+            list-style: none;
+            padding: 0;
+        }
+
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .list-group-item.bg-light {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginapp">
+        <div class="navbar">
+            <span>Welcome, {{ userEmail }}</span>
+            <div>
+                <a href="#" @click.prevent="logout">Logout</a>
+            </div>
+        </div>
+
+        <div class="container">
+            <h2>Order Details</h2>
+            <div v-if="selectedBook" class="card">
+                <div class="card-header">
+                    <h3>Order Summary for: {{ selectedBook.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <h4>Pickup Details</h4>
+                    <form @submit.prevent="placeOrder">
+                        <div class="row">
+                            <div class="col">
+                                <label for="name">Name</label>
+                                <input type="text" id="name" v-model="pickupDetails.name" class="form-control"
+                                    required />
+                            </div>
+                            <div class="col">
+                                <label for="phone">Phone</label>
+                                <input type="text" id="phone" v-model="pickupDetails.phone" class="form-control"
+                                    required />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="address">Street Address</label>
+                                <input type="text" id="address" v-model="pickupDetails.address" class="form-control"
+                                    required />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="city">City</label>
+                                <input type="text" id="city" v-model="pickupDetails.city" class="form-control"
+                                    required />
+                            </div>
+                            <div class="col">
+                                <label for="state">State</label>
+                                <input type="text" id="state" v-model="pickupDetails.state" class="form-control"
+                                    required />
+                            </div>
+                            <div class="col">
+                                <label for="postalCode">Postal Code</label>
+                                <input type="text" id="postalCode" v-model="pickupDetails.postalCode"
+                                    class="form-control" required />
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col">
+                                    <label for="quantity">Quantity</label>
+                                    <span class="btn btn-outline-secondary" style="cursor: pointer;"
+                                        @click="decrementQuantity">-</span>
+                                    <input type="number" id="quantity" v-model="selectedQuantity"
+                                        class="form-control d-inline-block" min="1" :max="selectedBook.quantity"
+                                        style="width: 60px; text-align: center;" required />
+                                    <span class="btn btn-outline-secondary" style="cursor: pointer;"
+                                        @click="incrementQuantity">+</span>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <h4>Order Quantity</h4>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <div>
+                                    <h6>{{ selectedBook.name }}</h6>
+                                    <small>Quantity: {{ selectedQuantity }}</small>
+                                </div>
+                                <span>₹{{ selectedBook.price * selectedQuantity }}</span>
+                            </li>
+                            <li class="list-group-item bg-light">
+                                <strong>Total (RS.):</strong>
+                                <strong>₹{{ selectedBook.price * selectedQuantity }}</strong>
+                            </li>
+                        </ul>
+                        <button type="submit" class="btn btn-success">Place Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+        integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+
+        createApp({
+            data() {
+                return {
+                    userEmail: "",
+                    selectedBook: JSON.parse(localStorage.getItem("selectedBook")),
+                    selectedQuantity: 1,
+                    totalAmount: 0,
+                    pickupDetails: {
+                        name: "",
+                        phone: "",
+                        address: "",
+                        city: "",
+                        state: "",
+                        postalCode: ""
+                    }
+                };
+            },
+            mounted() {
+                const email = localStorage.getItem("userEmail");
+                if (!email || !this.selectedBook) {
+                    window.location.href = "login.html";
+                } else {
+                    this.userEmail = email;
+                    this.totalAmount = this.selectedBook.price * this.selectedQuantity;
+                }
+            },
+            methods: {
+                incrementQuantity() {
+                    if (this.selectedQuantity < this.selectedBook.quantity) {
+                        this.selectedQuantity++;
+                        this.totalAmount = this.selectedBook.price * this.selectedQuantity;
+                    }
+                },
+                decrementQuantity() {
+                    if (this.selectedQuantity > 1) {
+                        this.selectedQuantity--;
+                        this.totalAmount = this.selectedBook.price * this.selectedQuantity;
+                    }
+                },
+                placeOrder() {
+                    axios.get(`http://localhost:5038/api/todoapp/GetBook/${this.selectedBook.id}`)
+                        .then(response => {
+                            const book = response.data;
+
+                            if (book.quantity < this.selectedQuantity) {
+                                alert("Book is out of stock or insufficient quantity.");
+                                return;
+                            }
+                            this.submitOrder();
+                        })
+                        .catch(error => {
+                            console.error("Error fetching latest book details:", error);
+                            alert("Unable to fetch the latest book details. Please try again.");
+                        });
+                },
+                submitOrder() {
+                    const orderData = {
+                        userEmail: this.userEmail,
+                        bookId: this.selectedBook.id,
+                        quantity: this.selectedQuantity,
+                        pickupDetails: this.pickupDetails
+                    };
+
+                    axios.post("http://localhost:5038/api/todoapp/AddPurchase", orderData, {
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(response => {
+                            console.log("Order placed successfully:", response.data);
+                            alert("Order placed successfully!");
+
+                            const purchaseData = {
+                                bookName: this.selectedBook.name,
+                                quantity: this.selectedQuantity,
+                                price: this.selectedBook.price,
+                                totalAmount: this.selectedBook.price * this.selectedQuantity
+                            };
+                            localStorage.setItem("currentPurchase", JSON.stringify(purchaseData));
+
+                            window.location.href = `purchaseDetails.html`;
+                        })
+                        .catch(error => {
+                            console.error("Error placing order:", error.response || error);
+                            alert(error.response?.data?.error || "Error placing order. Please try again.");
+                        });
+                },
+                logout() {
+                    localStorage.removeItem("userEmail");
+                    window.location.href = "login.html";
+                }
+            }
+        }).mount("#loginapp");
+    </script>
+
+</body>
+
+</html>
